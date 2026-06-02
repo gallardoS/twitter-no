@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>twitter-no</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <section class="window" aria-label="twitter-no">
+    <header class="titlebar">
+      <h1>twitter-no</h1>
+      <button id="close-popup" class="window-button" type="button" aria-label="cerrar popup">x</button>
+    </header>
+
+    <div class="window-body">
+      <div class="status-row">
+        <span class="status-label">status</span>
+        <span id="status" class="status-value">on</span>
+      </div>
+
+      <label class="switch" aria-label="activar o desactivar twitter-no">
+        <span class="switch-label">enabled</span>
+        <input id="enabled" type="checkbox">
+        <span class="slider"></span>
+      </label>
+
+      <div class="status-row">
+        <span class="status-label split-label"><span>no-count</span><span class="muted-label">total</span></span>
+        <span id="no-count" class="status-value">0</span>
+      </div>
+
+      <div class="status-row">
+        <span class="status-label split-label"><span>no-count</span><span class="muted-label">this week</span></span>
+        <span id="no-count-week" class="status-value">0</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="window chart-window" aria-label="no-count graph">
+    <header class="titlebar">
+      <h1>this-week</h1>
+      <button id="copy-chart" class="photo-button" type="button" aria-label="copiar grafica como imagen">photo</button>
+    </header>
+
+    <div class="window-body chart-body">
+      <svg id="week-chart" class="week-chart" viewBox="0 0 320 288" role="img" aria-label="intentos de acceso por dia y hora esta semana"></svg>
+    </div>
+  </section>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>
