@@ -1,5 +1,8 @@
 # twitter-no
 
+[![chrome web store](https://img.shields.io/badge/chrome%20web%20store-install-4285f4?style=flat&logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/EXTENSION_ID)
+
+
 chrome extension that blocks twitter/x with a blank page and a centered `no`.
 
 <img width="418" height="455" alt="block page" src="https://github.com/user-attachments/assets/1629eecc-e4b1-4502-9339-ca48158858eb" /> <img width="308" height="455" alt="popup" src="https://github.com/user-attachments/assets/d52db7f2-5bac-4c94-a163-8c6dce2aa8b7" />
@@ -14,9 +17,10 @@ chrome extension that blocks twitter/x with a blank page and a centered `no`.
 - weekly heatmap chart
 - copies the chart as a png to the clipboard
 
-## install 
+## local development
 
-1. open `chrome://extensions`
-2. enable developer mode
-3. click `load unpacked`
-4. select this folder
+1. clone repo
+2. open `chrome://extensions`
+3. enable developer mode
+4. click `load unpacked`
+5. select the cloned folder
