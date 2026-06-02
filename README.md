@@ -5,7 +5,7 @@ chrome extension that blocks twitter/x with a blank page and a centered `no`.
 <img width="418" height="455" alt="block page" src="https://github.com/user-attachments/assets/1629eecc-e4b1-4502-9339-ca48158858eb" /> <img width="308" height="455" alt="popup" src="https://github.com/user-attachments/assets/d52db7f2-5bac-4c94-a163-8c6dce2aa8b7" />
 
 
-## what?
+## features
 
 - on/off toggle from the extension popup
 - closes the twitter/x tab with the `ok` button
