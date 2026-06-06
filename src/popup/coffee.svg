@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" role="img" aria-label="coffee">
+  <rect width="16" height="16" fill="#c0c0c0"/>
+  <path fill="#7a4a23" d="M4 6h7v5H4z"/>
+  <path fill="#fff2d0" d="M5 7h5v3H5z"/>
+  <path fill="#7a4a23" d="M11 7h2v3h-2V9h1V8h-1z"/>
+  <path fill="#4b2b14" d="M5 6h5v1H5z"/>
+  <path fill="#000" d="M4 11h8v1H4z"/>
+  <path fill="#808080" d="M3 12h10v1H3z"/>
+  <path fill="#fff" d="M5 2h1v3H5zM8 1h1v4H8zM11 2h1v3h-1z"/>
+  <path fill="#808080" d="M6 2h1v3H6zM9 1h1v4H9zM12 2h1v3h-1z"/>
+</svg>

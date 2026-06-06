@@ -5,6 +5,7 @@ const noCountWeekText = document.getElementById("no-count-week");
 const closePopupButton = document.getElementById("close-popup");
 const weekChart = document.getElementById("week-chart");
 const copyChartButton = document.getElementById("copy-chart");
+const versionText = document.getElementById("version");
 const dayLabels = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 let currentAccessLog = [];
 
@@ -320,6 +321,10 @@ chrome.storage.sync.get({ enabled: true, noCount: 0 }, ({ enabled, noCount }) =>
 chrome.storage.local.get({ accessLog: [] }, ({ accessLog }) => {
   renderWeekChart(accessLog);
 });
+
+if (chrome.runtime.getManifest && versionText) {
+  versionText.textContent = `v${chrome.runtime.getManifest().version}`;
+}
 
 checkbox.addEventListener("change", () => {
   const enabled = checkbox.checked;

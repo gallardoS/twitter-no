@@ -24,10 +24,6 @@ body {
     inset -1px -1px #808080;
 }
 
-.window:last-of-type {
-  margin-bottom: 0;
-}
-
 .titlebar {
   display: flex;
   align-items: center;
@@ -266,4 +262,45 @@ input:checked + .slider::before {
 input:focus-visible + .slider {
   outline: 1px dotted #000;
   outline-offset: 2px;
+}
+
+.popup-footer {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 7px 6px;
+  color: #404040;
+  border-top: 1px solid #808080;
+  box-shadow: inset 0 1px #fff;
+  text-transform: lowercase;
+}
+
+.support-link {
+  display: inline-grid;
+  grid-template-columns: 16px auto;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: #000080;
+  text-decoration: underline;
+}
+
+.popup-footer a:focus-visible {
+  outline: 1px dotted #000;
+  outline-offset: 2px;
+}
+
+.version {
+  color: #606060;
+  text-shadow: 1px 1px #fff;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.coffee-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
 }
