@@ -27,6 +27,18 @@
         <span class="slider"></span>
       </label>
 
+      <div id="auto-enable-row" class="auto-enable-row">
+        <label class="auto-enable-label" aria-label="turn on auto-enable">
+          <input id="auto-enable" class="auto-enable-checkbox" type="checkbox">
+          <span class="checkbox-box" aria-hidden="true"></span>
+          <span class="status-label">auto-enable after</span>
+        </label>
+        <label class="auto-enable-control" aria-label="auto-enable after minutes">
+          <span class="muted-label auto-enable-unit">mins</span>
+          <input id="auto-enable-minutes" class="auto-enable-minutes" type="number" min="1" max="999" step="1" value="5" inputmode="numeric">
+        </label>
+      </div>
+
       <div class="status-row">
         <span class="status-label split-label"><span>no-count</span><span class="muted-label">total</span></span>
         <span id="no-count" class="status-value">0</span>

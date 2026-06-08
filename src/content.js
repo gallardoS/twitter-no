@@ -3,6 +3,8 @@
   const TIMER_ID = "twitter-no-timer";
   const TIMER_MAX_SIZE_MILLISECONDS = 1000 * 60 * 5;
   let enabled = false;
+  let autoEnableEnabled = false;
+  let autoEnableMinutes = 5;
   let timerStartedAt = null;
   let timerIntervalId = null;
 
@@ -88,6 +90,13 @@
     return `${minutes}:${String(seconds).padStart(2, "0")}`;
   }
 
+  function getAutoEnableLimitMilliseconds() {
+    const minutes = Number.parseInt(autoEnableMinutes, 10);
+    const safeMinutes = Number.isNaN(minutes) ? 5 : Math.min(Math.max(minutes, 1), 999);
+
+    return safeMinutes * 60 * 1000;
+  }
+
   function updateTimerText(timer) {
     if (timerStartedAt === null) {
       timerStartedAt = Date.now();
@@ -98,6 +107,10 @@
 
     timer.textContent = formatElapsedTime(elapsedMilliseconds);
     timer.style.setProperty("--twitter-no-timer-scale", timerScale.toFixed(3));
+
+    if (autoEnableEnabled && elapsedMilliseconds >= getAutoEnableLimitMilliseconds()) {
+      chrome.storage.sync.set({ enabled: true });
+    }
   }
 
   function startTimer(timer) {
@@ -162,7 +175,17 @@
     ensureTimer();
   }
 
-  chrome.storage.sync.get({ enabled: true }, ({ enabled: storedEnabled }) => {
+  chrome.storage.sync.get({
+    enabled: true,
+    autoEnableEnabled: false,
+    autoEnableMinutes: 5
+  }, ({
+    enabled: storedEnabled,
+    autoEnableEnabled: storedAutoEnableEnabled,
+    autoEnableMinutes: storedAutoEnableMinutes
+  }) => {
+    autoEnableEnabled = storedAutoEnableEnabled;
+    autoEnableMinutes = storedAutoEnableMinutes;
     applyState(storedEnabled);
   });
 
@@ -171,6 +194,13 @@
       applyState(changes.enabled.newValue);
     }
 
+    if (areaName === "sync" && changes.autoEnableEnabled) {
+      autoEnableEnabled = changes.autoEnableEnabled.newValue;
+    }
+
+    if (areaName === "sync" && changes.autoEnableMinutes) {
+      autoEnableMinutes = changes.autoEnableMinutes.newValue;
+    }
   });
 
   const observer = new MutationObserver(() => {

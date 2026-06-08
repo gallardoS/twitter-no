@@ -1,4 +1,7 @@
 const checkbox = document.getElementById("enabled");
+const autoEnableRow = document.getElementById("auto-enable-row");
+const autoEnableCheckbox = document.getElementById("auto-enable");
+const autoEnableMinutesInput = document.getElementById("auto-enable-minutes");
 const statusText = document.getElementById("status");
 const noCountText = document.getElementById("no-count");
 const noCountWeekText = document.getElementById("no-count-week");
@@ -60,6 +63,24 @@ function createSvgElement(tagName, attributes = {}) {
 function render(enabled) {
   checkbox.checked = enabled;
   statusText.textContent = enabled ? "on" : "off";
+  autoEnableRow.classList.toggle("is-disabled", enabled);
+  autoEnableCheckbox.disabled = enabled;
+  autoEnableMinutesInput.disabled = enabled;
+}
+
+function getAutoEnableMinutes() {
+  const minutes = Number.parseInt(autoEnableMinutesInput.value, 10);
+
+  if (Number.isNaN(minutes)) {
+    return 5;
+  }
+
+  return Math.min(Math.max(minutes, 1), 999);
+}
+
+function renderAutoEnable(autoEnableEnabled, autoEnableMinutes) {
+  autoEnableCheckbox.checked = autoEnableEnabled;
+  autoEnableMinutesInput.value = autoEnableMinutes;
 }
 
 function getWeekAttempts(accessLog, weekOffset = 0) {
@@ -350,8 +371,14 @@ async function copyChartImage() {
   ]);
 }
 
-chrome.storage.sync.get({ enabled: true, noCount: 0 }, ({ enabled, noCount }) => {
+chrome.storage.sync.get({
+  enabled: true,
+  noCount: 0,
+  autoEnableEnabled: false,
+  autoEnableMinutes: 5
+}, ({ enabled, noCount, autoEnableEnabled, autoEnableMinutes }) => {
   render(enabled);
+  renderAutoEnable(autoEnableEnabled, autoEnableMinutes);
   noCountText.textContent = noCount;
 });
 
@@ -369,9 +396,36 @@ checkbox.addEventListener("change", () => {
   render(enabled);
 });
 
+autoEnableCheckbox.addEventListener("change", () => {
+  const autoEnableEnabled = autoEnableCheckbox.checked;
+  const autoEnableMinutes = getAutoEnableMinutes();
+
+  chrome.storage.sync.set({ autoEnableEnabled, autoEnableMinutes });
+  renderAutoEnable(autoEnableEnabled, autoEnableMinutes);
+});
+
+autoEnableMinutesInput.addEventListener("change", () => {
+  const autoEnableMinutes = getAutoEnableMinutes();
+
+  chrome.storage.sync.set({ autoEnableMinutes });
+  renderAutoEnable(autoEnableCheckbox.checked, autoEnableMinutes);
+});
+
 chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === "sync" && changes.enabled) {
+    render(changes.enabled.newValue);
+  }
+
   if (areaName === "sync" && changes.noCount) {
     noCountText.textContent = changes.noCount.newValue;
+  }
+
+  if (areaName === "sync" && changes.autoEnableEnabled) {
+    renderAutoEnable(changes.autoEnableEnabled.newValue, getAutoEnableMinutes());
+  }
+
+  if (areaName === "sync" && changes.autoEnableMinutes) {
+    renderAutoEnable(autoEnableCheckbox.checked, changes.autoEnableMinutes.newValue);
   }
 
   if (areaName === "local" && changes.accessLog) {
