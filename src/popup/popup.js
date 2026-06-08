@@ -9,6 +9,7 @@ const toggleChartWeekButton = document.getElementById("toggle-chart-week");
 const copyChartButton = document.getElementById("copy-chart");
 const versionText = document.getElementById("version");
 const dayLabels = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+const hoursInDay = 24;
 let currentAccessLog = [];
 let currentWeekOffset = 0;
 
@@ -32,6 +33,18 @@ function getWeekRange(weekOffset = 0) {
 
 function getChartPeriodLabel(weekOffset) {
   return weekOffset === -1 ? "last-week" : "this-week";
+}
+
+function getEmptyChartLabel(weekOffset) {
+  return weekOffset === 0 ? "no attempts this week" : "no attempts last week";
+}
+
+function getChartAriaLabel(weekOffset) {
+  return `access attempts by day and hour ${weekOffset === 0 ? "this week" : "last week"}`;
+}
+
+function getToggleChartAriaLabel(weekOffset) {
+  return weekOffset === 0 ? "show last week's data" : "show this week's data";
 }
 
 function createSvgElement(tagName, attributes = {}) {
@@ -58,6 +71,50 @@ function getWeekAttempts(accessLog, weekOffset = 0) {
     .filter((date) => date >= weekStart && date < weekEnd);
 }
 
+function getAttemptBuckets(attempts) {
+  const buckets = attempts.reduce((bucketMap, date) => {
+    const day = (date.getDay() + 6) % 7;
+    const hour = date.getHours();
+    const key = `${day}-${hour}`;
+    const current = bucketMap.get(key) ?? { day, hour, count: 0 };
+
+    current.count += 1;
+    bucketMap.set(key, current);
+    return bucketMap;
+  }, new Map());
+
+  return {
+    buckets,
+    maxCount: Math.max(1, ...Array.from(buckets.values(), ({ count }) => count))
+  };
+}
+
+function getChartPointColor(count, maxCount) {
+  const intensity = count / maxCount;
+  const lightness = Math.round(78 - intensity * 58);
+
+  return `hsl(240deg 80% ${lightness}%)`;
+}
+
+function getChartPointRadius(count) {
+  return 3 + Math.min(count - 1, 5);
+}
+
+function getChartModel(accessLog, weekOffset = 0) {
+  const attempts = getWeekAttempts(accessLog, weekOffset);
+  const { buckets, maxCount } = getAttemptBuckets(attempts);
+
+  return {
+    attempts,
+    buckets,
+    maxCount,
+    periodLabel: getChartPeriodLabel(weekOffset),
+    emptyLabel: getEmptyChartLabel(weekOffset),
+    ariaLabel: getChartAriaLabel(weekOffset),
+    toggleAriaLabel: getToggleChartAriaLabel(weekOffset)
+  };
+}
+
 function renderWeekChart(accessLog = [], weekOffset = currentWeekOffset) {
   currentAccessLog = accessLog;
   currentWeekOffset = weekOffset;
@@ -66,23 +123,16 @@ function renderWeekChart(accessLog = [], weekOffset = currentWeekOffset) {
   const padding = { top: 12, right: 10, bottom: 24, left: 28 };
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
-  const attempts = getWeekAttempts(accessLog, weekOffset);
-  const periodLabel = getChartPeriodLabel(weekOffset);
+  const chartModel = getChartModel(accessLog, weekOffset);
 
   if (weekOffset === 0) {
-    noCountWeekText.textContent = attempts.length;
+    noCountWeekText.textContent = chartModel.attempts.length;
   }
 
-  chartTitle.textContent = periodLabel;
+  chartTitle.textContent = chartModel.periodLabel;
   toggleChartWeekButton.textContent = weekOffset === 0 ? "last week" : "this week";
-  toggleChartWeekButton.setAttribute(
-    "aria-label",
-    weekOffset === 0 ? "show last week's data" : "show this week's data"
-  );
-  weekChart.setAttribute(
-    "aria-label",
-    `access attempts by day and hour ${weekOffset === 0 ? "this week" : "last week"}`
-  );
+  toggleChartWeekButton.setAttribute("aria-label", chartModel.toggleAriaLabel);
+  weekChart.setAttribute("aria-label", chartModel.ariaLabel);
   weekChart.replaceChildren();
 
   for (let day = 0; day < 7; day += 1) {
@@ -105,8 +155,8 @@ function renderWeekChart(accessLog = [], weekOffset = currentWeekOffset) {
     weekChart.append(label);
   }
 
-  Array.from({ length: 25 }, (_, hour) => hour).forEach((hour) => {
-    const y = padding.top + (plotHeight / 24) * hour;
+  Array.from({ length: hoursInDay + 1 }, (_, hour) => hour).forEach((hour) => {
+    const y = padding.top + (plotHeight / hoursInDay) * hour;
     weekChart.append(createSvgElement("line", {
       class: "chart-grid",
       x1: padding.left,
@@ -140,63 +190,30 @@ function renderWeekChart(accessLog = [], weekOffset = currentWeekOffset) {
     y2: padding.top + plotHeight
   }));
 
-  if (attempts.length === 0) {
+  if (chartModel.attempts.length === 0) {
     const empty = createSvgElement("text", {
       class: "chart-empty",
       x: padding.left + plotWidth / 2,
       y: padding.top + plotHeight / 2,
       "text-anchor": "middle"
     });
-    empty.textContent = weekOffset === 0 ? "no attempts this week" : "no attempts last week";
+    empty.textContent = chartModel.emptyLabel;
     weekChart.append(empty);
     return;
   }
 
-  const buckets = attempts.reduce((bucketMap, date) => {
-    const day = (date.getDay() + 6) % 7;
-    const hour = date.getHours();
-    const key = `${day}-${hour}`;
-    const current = bucketMap.get(key) ?? { day, hour, count: 0 };
-
-    current.count += 1;
-    bucketMap.set(key, current);
-    return bucketMap;
-  }, new Map());
-  const maxCount = Math.max(...Array.from(buckets.values(), ({ count }) => count));
-
-  buckets.forEach(({ day, hour, count }) => {
-    const intensity = count / maxCount;
-    const lightness = Math.round(78 - intensity * 58);
-    const radius = 3 + Math.min(count - 1, 5);
+  chartModel.buckets.forEach(({ day, hour, count }) => {
     const x = padding.left + (plotWidth / 6) * day;
-    const y = padding.top + (plotHeight / 24) * (hour + 0.5);
+    const y = padding.top + (plotHeight / hoursInDay) * (hour + 0.5);
 
     weekChart.append(createSvgElement("circle", {
       class: "chart-point",
       cx: x,
       cy: y,
-      r: radius,
-      fill: `hsl(240deg 80% ${lightness}%)`
+      r: getChartPointRadius(count),
+      fill: getChartPointColor(count, chartModel.maxCount)
     }));
   });
-}
-
-function getAttemptBuckets(attempts) {
-  const buckets = attempts.reduce((bucketMap, date) => {
-    const day = (date.getDay() + 6) % 7;
-    const hour = date.getHours();
-    const key = `${day}-${hour}`;
-    const current = bucketMap.get(key) ?? { day, hour, count: 0 };
-
-    current.count += 1;
-    bucketMap.set(key, current);
-    return bucketMap;
-  }, new Map());
-
-  return {
-    buckets,
-    maxCount: Math.max(1, ...Array.from(buckets.values(), ({ count }) => count))
-  };
 }
 
 function drawWin95Rect(context, x, y, width, height) {
@@ -225,9 +242,7 @@ function drawCopiedChart(context, accessLog, weekOffset = currentWeekOffset) {
   const plotY = chart.y + padding.top;
   const plotWidth = chart.width - padding.left - padding.right;
   const plotHeight = chart.height - padding.top - padding.bottom;
-  const attempts = getWeekAttempts(accessLog, weekOffset);
-  const { buckets, maxCount } = getAttemptBuckets(attempts);
-  const periodLabel = getChartPeriodLabel(weekOffset);
+  const chartModel = getChartModel(accessLog, weekOffset);
 
   context.imageSmoothingEnabled = false;
   context.fillStyle = "#c0c0c0";
@@ -241,7 +256,7 @@ function drawCopiedChart(context, accessLog, weekOffset = currentWeekOffset) {
   context.font = "bold 11px Arial";
   context.textAlign = "left";
   context.textBaseline = "alphabetic";
-  context.fillText(periodLabel, 8, 17);
+  context.fillText(chartModel.periodLabel, 8, 17);
   context.textAlign = "right";
   context.fillText("twitter-no", width - 8, 17);
 
@@ -261,8 +276,8 @@ function drawCopiedChart(context, accessLog, weekOffset = currentWeekOffset) {
     context.stroke();
   }
 
-  for (let hour = 0; hour <= 24; hour += 1) {
-    const y = Math.round(plotY + (plotHeight / 24) * hour) + 0.5;
+  for (let hour = 0; hour <= hoursInDay; hour += 1) {
+    const y = Math.round(plotY + (plotHeight / hoursInDay) * hour) + 0.5;
     context.beginPath();
     context.moveTo(plotX, y);
     context.lineTo(plotX + plotWidth, y);
@@ -281,8 +296,8 @@ function drawCopiedChart(context, accessLog, weekOffset = currentWeekOffset) {
   context.textAlign = "right";
   context.textBaseline = "middle";
 
-  for (let hour = 0; hour <= 24; hour += 1) {
-    const y = plotY + (plotHeight / 24) * hour;
+  for (let hour = 0; hour <= hoursInDay; hour += 1) {
+    const y = plotY + (plotHeight / hoursInDay) * hour;
     context.fillText(String(hour).padStart(2, "0"), plotX - 6, y);
   }
 
@@ -293,29 +308,22 @@ function drawCopiedChart(context, accessLog, weekOffset = currentWeekOffset) {
     context.fillText(label, x, chart.y + chart.height - 7);
   });
 
-  buckets.forEach(({ day, hour, count }) => {
-    const intensity = count / maxCount;
-    const lightness = Math.round(78 - intensity * 58);
-    const radius = 3 + Math.min(count - 1, 5);
+  chartModel.buckets.forEach(({ day, hour, count }) => {
     const x = plotX + (plotWidth / 6) * day;
-    const y = plotY + (plotHeight / 24) * (hour + 0.5);
+    const y = plotY + (plotHeight / hoursInDay) * (hour + 0.5);
 
-    context.fillStyle = `hsl(240deg 80% ${lightness}%)`;
+    context.fillStyle = getChartPointColor(count, chartModel.maxCount);
     context.beginPath();
-    context.arc(x, y, radius, 0, Math.PI * 2);
+    context.arc(x, y, getChartPointRadius(count), 0, Math.PI * 2);
     context.fill();
   });
 
-  if (attempts.length === 0) {
+  if (chartModel.attempts.length === 0) {
     context.fillStyle = "#606060";
     context.font = "10px Arial";
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.fillText(
-      weekOffset === 0 ? "no attempts this week" : "no attempts last week",
-      plotX + plotWidth / 2,
-      plotY + plotHeight / 2
-    );
+    context.fillText(chartModel.emptyLabel, plotX + plotWidth / 2, plotY + plotHeight / 2);
   }
 }
 
