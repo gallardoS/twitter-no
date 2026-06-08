@@ -70,7 +70,7 @@ function getAutoEnableMinutes() {
   const minutes = Number.parseInt(autoEnableMinutesInput.value, 10);
 
   if (Number.isNaN(minutes)) {
-    return 5;
+    return 3;
   }
 
   return Math.min(Math.max(minutes, 1), 999);
@@ -373,7 +373,7 @@ chrome.storage.sync.get({
   enabled: true,
   noCount: 0,
   autoEnableEnabled: false,
-  autoEnableMinutes: 5
+  autoEnableMinutes: 3
 }, ({ enabled, noCount, autoEnableEnabled, autoEnableMinutes }) => {
   render(enabled);
   renderAutoEnable(autoEnableEnabled, autoEnableMinutes);

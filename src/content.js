@@ -4,7 +4,7 @@
   const TIMER_MAX_SIZE_MILLISECONDS = 1000 * 60 * 5;
   let enabled = false;
   let autoEnableEnabled = false;
-  let autoEnableMinutes = 5;
+  let autoEnableMinutes = 3;
   let timerStartedAt = null;
   let timerIntervalId = null;
 
@@ -92,7 +92,7 @@
 
   function getAutoEnableLimitMilliseconds() {
     const minutes = Number.parseInt(autoEnableMinutes, 10);
-    const safeMinutes = Number.isNaN(minutes) ? 5 : Math.min(Math.max(minutes, 1), 999);
+    const safeMinutes = Number.isNaN(minutes) ? 3 : Math.min(Math.max(minutes, 1), 999);
 
     return safeMinutes * 60 * 1000;
   }
@@ -178,7 +178,7 @@
   chrome.storage.sync.get({
     enabled: true,
     autoEnableEnabled: false,
-    autoEnableMinutes: 5
+    autoEnableMinutes: 3
   }, ({
     enabled: storedEnabled,
     autoEnableEnabled: storedAutoEnableEnabled,
