@@ -1,6 +1,10 @@
 (function () {
   const ROOT_ID = "twitter-no-root";
+  const TIMER_ID = "twitter-no-timer";
+  const TIMER_MAX_SIZE_MILLISECONDS = 1000 * 60 * 5;
   let enabled = false;
+  let timerStartedAt = null;
+  let timerIntervalId = null;
 
   chrome.storage.sync.get({ noCount: 0 }, ({ noCount }) => {
     chrome.storage.sync.set({ noCount: noCount + 1 });
@@ -70,6 +74,73 @@
     document.documentElement.classList.add("twitter-no-active");
   }
 
+  function formatElapsedTime(elapsedMilliseconds) {
+    const totalSeconds = Math.floor(elapsedMilliseconds / 1000);
+    const seconds = totalSeconds % 60;
+    const totalMinutes = Math.floor(totalSeconds / 60);
+    const minutes = totalMinutes % 60;
+    const hours = Math.floor(totalMinutes / 60);
+
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  function updateTimerText(timer) {
+    if (timerStartedAt === null) {
+      timerStartedAt = Date.now();
+    }
+
+    const elapsedMilliseconds = Date.now() - timerStartedAt;
+    const timerScale = Math.min(elapsedMilliseconds / TIMER_MAX_SIZE_MILLISECONDS, 1);
+
+    timer.textContent = formatElapsedTime(elapsedMilliseconds);
+    timer.style.setProperty("--twitter-no-timer-scale", timerScale.toFixed(3));
+  }
+
+  function startTimer(timer) {
+    if (timerIntervalId) {
+      return;
+    }
+
+    updateTimerText(timer);
+    timerIntervalId = window.setInterval(() => {
+      const currentTimer = document.getElementById(TIMER_ID);
+
+      if (currentTimer) {
+        updateTimerText(currentTimer);
+      }
+    }, 1000);
+  }
+
+  function ensureTimer() {
+    if (!document.body) {
+      return;
+    }
+
+    let timer = document.getElementById(TIMER_ID);
+    if (!timer) {
+      timer = document.createElement("aside");
+      timer.id = TIMER_ID;
+      timer.setAttribute("aria-label", "time spent on twitter");
+      document.body.appendChild(timer);
+    }
+
+    startTimer(timer);
+  }
+
+  function removeTimer() {
+    if (timerIntervalId) {
+      window.clearInterval(timerIntervalId);
+      timerIntervalId = null;
+    }
+
+    timerStartedAt = null;
+    document.getElementById(TIMER_ID)?.remove();
+  }
+
   function removeBlankPage() {
     document.documentElement.classList.remove("twitter-no-active");
     document.getElementById(ROOT_ID)?.remove();
@@ -79,6 +150,8 @@
     enabled = Boolean(nextEnabled);
 
     if (enabled) {
+      removeTimer();
+
       if (document.body) {
         ensureBlankPage();
       }
@@ -86,6 +159,7 @@
     }
 
     removeBlankPage();
+    ensureTimer();
   }
 
   chrome.storage.sync.get({ enabled: true }, ({ enabled: storedEnabled }) => {
@@ -96,11 +170,16 @@
     if (areaName === "sync" && changes.enabled) {
       applyState(changes.enabled.newValue);
     }
+
   });
 
   const observer = new MutationObserver(() => {
     if (enabled && !document.getElementById(ROOT_ID)) {
       ensureBlankPage();
+    }
+
+    if (!enabled && !document.getElementById(TIMER_ID)) {
+      ensureTimer();
     }
   });
 
