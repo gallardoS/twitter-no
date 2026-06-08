@@ -3,11 +3,14 @@ const statusText = document.getElementById("status");
 const noCountText = document.getElementById("no-count");
 const noCountWeekText = document.getElementById("no-count-week");
 const closePopupButton = document.getElementById("close-popup");
+const chartTitle = document.getElementById("chart-title");
 const weekChart = document.getElementById("week-chart");
+const toggleChartWeekButton = document.getElementById("toggle-chart-week");
 const copyChartButton = document.getElementById("copy-chart");
 const versionText = document.getElementById("version");
 const dayLabels = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 let currentAccessLog = [];
+let currentWeekOffset = 0;
 
 function getWeekStart(date) {
   const start = new Date(date);
@@ -15,6 +18,20 @@ function getWeekStart(date) {
   start.setHours(0, 0, 0, 0);
   start.setDate(start.getDate() - dayOffset);
   return start;
+}
+
+function getWeekRange(weekOffset = 0) {
+  const weekStart = getWeekStart(new Date());
+  weekStart.setDate(weekStart.getDate() + weekOffset * 7);
+
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 7);
+
+  return { weekStart, weekEnd };
+}
+
+function getChartPeriodLabel(weekOffset) {
+  return weekOffset === -1 ? "last-week" : "this-week";
 }
 
 function createSvgElement(tagName, attributes = {}) {
@@ -32,22 +49,40 @@ function render(enabled) {
   statusText.textContent = enabled ? "on" : "off";
 }
 
-function renderWeekChart(accessLog = []) {
+function getWeekAttempts(accessLog, weekOffset = 0) {
+  const { weekStart, weekEnd } = getWeekRange(weekOffset);
+
+  return accessLog
+    .filter((timestamp) => Number.isFinite(timestamp))
+    .map((timestamp) => new Date(timestamp))
+    .filter((date) => date >= weekStart && date < weekEnd);
+}
+
+function renderWeekChart(accessLog = [], weekOffset = currentWeekOffset) {
   currentAccessLog = accessLog;
+  currentWeekOffset = weekOffset;
   const width = 320;
   const height = 288;
   const padding = { top: 12, right: 10, bottom: 24, left: 28 };
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
-  const weekStart = getWeekStart(new Date());
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 7);
-  const attempts = accessLog
-    .filter((timestamp) => Number.isFinite(timestamp))
-    .map((timestamp) => new Date(timestamp))
-    .filter((date) => date >= weekStart && date < weekEnd);
+  const attempts = getWeekAttempts(accessLog, weekOffset);
+  const periodLabel = getChartPeriodLabel(weekOffset);
 
-  noCountWeekText.textContent = attempts.length;
+  if (weekOffset === 0) {
+    noCountWeekText.textContent = attempts.length;
+  }
+
+  chartTitle.textContent = periodLabel;
+  toggleChartWeekButton.textContent = weekOffset === 0 ? "last week" : "this week";
+  toggleChartWeekButton.setAttribute(
+    "aria-label",
+    weekOffset === 0 ? "mostrar datos de la semana pasada" : "mostrar datos de esta semana"
+  );
+  weekChart.setAttribute(
+    "aria-label",
+    `intentos de acceso por dia y hora ${weekOffset === 0 ? "esta semana" : "la semana pasada"}`
+  );
   weekChart.replaceChildren();
 
   for (let day = 0; day < 7; day += 1) {
@@ -112,7 +147,7 @@ function renderWeekChart(accessLog = []) {
       y: padding.top + plotHeight / 2,
       "text-anchor": "middle"
     });
-    empty.textContent = "no attempts this week";
+    empty.textContent = weekOffset === 0 ? "no attempts this week" : "no attempts last week";
     weekChart.append(empty);
     return;
   }
@@ -144,17 +179,6 @@ function renderWeekChart(accessLog = []) {
       fill: `hsl(240deg 80% ${lightness}%)`
     }));
   });
-}
-
-function getThisWeekAttempts(accessLog) {
-  const weekStart = getWeekStart(new Date());
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 7);
-
-  return accessLog
-    .filter((timestamp) => Number.isFinite(timestamp))
-    .map((timestamp) => new Date(timestamp))
-    .filter((date) => date >= weekStart && date < weekEnd);
 }
 
 function getAttemptBuckets(attempts) {
@@ -192,7 +216,7 @@ function drawWin95Rect(context, x, y, width, height) {
   context.stroke();
 }
 
-function drawCopiedChart(context, accessLog) {
+function drawCopiedChart(context, accessLog, weekOffset = currentWeekOffset) {
   const width = 344;
   const height = 331;
   const chart = { x: 14, y: 43, width: 317, height: 274 };
@@ -201,8 +225,9 @@ function drawCopiedChart(context, accessLog) {
   const plotY = chart.y + padding.top;
   const plotWidth = chart.width - padding.left - padding.right;
   const plotHeight = chart.height - padding.top - padding.bottom;
-  const attempts = getThisWeekAttempts(accessLog);
+  const attempts = getWeekAttempts(accessLog, weekOffset);
   const { buckets, maxCount } = getAttemptBuckets(attempts);
+  const periodLabel = getChartPeriodLabel(weekOffset);
 
   context.imageSmoothingEnabled = false;
   context.fillStyle = "#c0c0c0";
@@ -216,7 +241,7 @@ function drawCopiedChart(context, accessLog) {
   context.font = "bold 11px Arial";
   context.textAlign = "left";
   context.textBaseline = "alphabetic";
-  context.fillText("this-week", 8, 17);
+  context.fillText(periodLabel, 8, 17);
   context.textAlign = "right";
   context.fillText("twitter-no", width - 8, 17);
 
@@ -286,7 +311,11 @@ function drawCopiedChart(context, accessLog) {
     context.font = "10px Arial";
     context.textAlign = "center";
     context.textBaseline = "middle";
-    context.fillText("no attempts this week", plotX + plotWidth / 2, plotY + plotHeight / 2);
+    context.fillText(
+      weekOffset === 0 ? "no attempts this week" : "no attempts last week",
+      plotX + plotWidth / 2,
+      plotY + plotHeight / 2
+    );
   }
 }
 
@@ -300,7 +329,7 @@ async function copyChartImage() {
   const canvas = document.createElement("canvas");
   canvas.width = 344;
   canvas.height = 331;
-  drawCopiedChart(canvas.getContext("2d"), currentAccessLog);
+  drawCopiedChart(canvas.getContext("2d"), currentAccessLog, currentWeekOffset);
 
   const blob = await getCanvasBlob(canvas);
 
@@ -338,12 +367,16 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   }
 
   if (areaName === "local" && changes.accessLog) {
-    renderWeekChart(changes.accessLog.newValue);
+    renderWeekChart(changes.accessLog.newValue, currentWeekOffset);
   }
 });
 
 closePopupButton.addEventListener("click", () => {
   window.close();
+});
+
+toggleChartWeekButton.addEventListener("click", () => {
+  renderWeekChart(currentAccessLog, currentWeekOffset === 0 ? -1 : 0);
 });
 
 copyChartButton.addEventListener("click", async () => {

@@ -41,8 +41,11 @@
 
   <section class="window chart-window" aria-label="no-count graph">
     <header class="titlebar">
-      <h1>this-week</h1>
-      <button id="copy-chart" class="photo-button" type="button" aria-label="copiar grafica como imagen">photo</button>
+      <h1 id="chart-title">this-week</h1>
+      <div class="titlebar-actions">
+        <button id="toggle-chart-week" class="photo-button" type="button" aria-label="mostrar datos de la semana pasada">last week</button>
+        <button id="copy-chart" class="photo-button" type="button" aria-label="copiar grafica como imagen">photo</button>
+      </div>
     </header>
 
     <div class="window-body chart-body">

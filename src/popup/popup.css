@@ -35,6 +35,12 @@ body {
   background: #000080;
 }
 
+.titlebar-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
 .photo-button {
   margin: 0;
   padding: 1px 7px 2px;
