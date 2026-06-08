@@ -18,6 +18,14 @@
   });
 
   function ensureBlankPage() {
+    function clearInteractionArtifacts() {
+      window.getSelection()?.removeAllRanges();
+
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    }
+
     let style = document.getElementById(STYLE_ID);
     if (!style) {
       style = document.createElement("style");
@@ -30,6 +38,10 @@
           min-height: 100% !important;
           overflow: hidden !important;
           background: #fff !important;
+          caret-color: transparent !important;
+          cursor: default !important;
+          -webkit-user-select: none !important;
+          user-select: none !important;
         }
 
         html.twitter-no-active body > :not(#${ROOT_ID}) {
@@ -48,6 +60,10 @@
           font-weight: 400 !important;
           letter-spacing: 0 !important;
           text-transform: lowercase !important;
+          caret-color: transparent !important;
+          cursor: default !important;
+          -webkit-user-select: none !important;
+          user-select: none !important;
         }
 
         #${ROOT_ID} .twitter-no-word {
@@ -57,6 +73,9 @@
           font-weight: 400 !important;
           line-height: 1 !important;
           letter-spacing: 0 !important;
+          caret-color: transparent !important;
+          cursor: default !important;
+          -webkit-user-select: none !important;
           user-select: none !important;
         }
 
@@ -83,6 +102,9 @@
           text-transform: lowercase !important;
           letter-spacing: 2px !important;
           padding: 5px 30px !important;
+          caret-color: transparent !important;
+          -webkit-user-select: none !important;
+          user-select: none !important;
         }
 
         #${ROOT_ID} .twitter-no-close:active {
@@ -100,16 +122,28 @@
     if (!root) {
       root = document.createElement("main");
       root.id = ROOT_ID;
+      root.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+        clearInteractionArtifacts();
+      });
 
       const word = document.createElement("span");
       word.className = "twitter-no-word";
       word.textContent = "no";
+      word.setAttribute("unselectable", "on");
 
       const closeButton = document.createElement("button");
       closeButton.className = "twitter-no-close";
       closeButton.type = "button";
+      closeButton.tabIndex = -1;
+      closeButton.setAttribute("unselectable", "on");
       closeButton.textContent = "ok";
+      closeButton.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+        clearInteractionArtifacts();
+      });
       closeButton.addEventListener("click", () => {
+        closeButton.blur();
         const runtime = globalThis.chrome?.runtime;
 
         if (runtime?.sendMessage) {
