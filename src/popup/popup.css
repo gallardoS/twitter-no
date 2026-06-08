@@ -201,8 +201,11 @@ h1 {
   box-shadow:
     inset 1px 1px #808080,
     inset -1px -1px #dfdfdf;
+  caret-color: transparent;
   text-align: center;
   text-transform: lowercase;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .switch {
