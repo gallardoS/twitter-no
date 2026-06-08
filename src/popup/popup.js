@@ -2,7 +2,6 @@ const checkbox = document.getElementById("enabled");
 const autoEnableRow = document.getElementById("auto-enable-row");
 const autoEnableCheckbox = document.getElementById("auto-enable");
 const autoEnableMinutesInput = document.getElementById("auto-enable-minutes");
-const statusText = document.getElementById("status");
 const noCountText = document.getElementById("no-count");
 const noCountWeekText = document.getElementById("no-count-week");
 const closePopupButton = document.getElementById("close-popup");
@@ -62,7 +61,6 @@ function createSvgElement(tagName, attributes = {}) {
 
 function render(enabled) {
   checkbox.checked = enabled;
-  statusText.textContent = enabled ? "on" : "off";
   autoEnableRow.classList.toggle("is-disabled", enabled);
   autoEnableCheckbox.disabled = enabled;
   autoEnableMinutesInput.disabled = enabled;
