@@ -1,6 +1,5 @@
 (function () {
   const ROOT_ID = "twitter-no-root";
-  const STYLE_ID = "twitter-no-style";
   let enabled = false;
 
   chrome.storage.sync.get({ noCount: 0 }, ({ noCount }) => {
@@ -24,98 +23,6 @@
       if (document.activeElement instanceof HTMLElement) {
         document.activeElement.blur();
       }
-    }
-
-    let style = document.getElementById(STYLE_ID);
-    if (!style) {
-      style = document.createElement("style");
-      style.id = STYLE_ID;
-      style.textContent = `
-        html.twitter-no-active,
-        html.twitter-no-active body {
-          margin: 0 !important;
-          width: 100% !important;
-          min-height: 100% !important;
-          overflow: hidden !important;
-          background: #fff !important;
-          caret-color: transparent !important;
-          cursor: default !important;
-          -webkit-user-select: none !important;
-          user-select: none !important;
-        }
-
-        html.twitter-no-active body > :not(#${ROOT_ID}) {
-          display: none !important;
-        }
-
-        #${ROOT_ID} {
-          position: fixed !important;
-          inset: 0 !important;
-          z-index: 2147483647 !important;
-          display: grid !important;
-          place-items: center !important;
-          background: #fff !important;
-          color: #000 !important;
-          font-family: Helvetica, Arial, sans-serif !important;
-          font-weight: 400 !important;
-          letter-spacing: 0 !important;
-          text-transform: lowercase !important;
-          caret-color: transparent !important;
-          cursor: default !important;
-          -webkit-user-select: none !important;
-          user-select: none !important;
-        }
-
-        #${ROOT_ID} .twitter-no-word {
-          color: #000 !important;
-          font-family: Helvetica, Arial, sans-serif !important;
-          font-size: 64px !important;
-          font-weight: 400 !important;
-          line-height: 1 !important;
-          letter-spacing: 0 !important;
-          caret-color: transparent !important;
-          cursor: default !important;
-          -webkit-user-select: none !important;
-          user-select: none !important;
-        }
-
-        #${ROOT_ID} .twitter-no-close {
-          position: absolute !important;
-          top: calc(50% + 86px) !important;
-          left: 50% !important;
-          transform: translateX(-50%) !important;
-          border: none !important;
-          outline: 1px dotted rgb(37, 37, 37) !important;
-          outline-offset: -4px !important;
-          cursor: pointer !important;
-          background: hsl(0deg 0% 75%) !important;
-          box-shadow:
-            inset -1px -1px #292929,
-            inset 1px 1px #fff,
-            inset -2px -2px rgb(158, 158, 158),
-            inset 2px 2px #ffffff !important;
-          color: #000 !important;
-          font-family: Helvetica, Arial, sans-serif !important;
-          font-size: 14px !important;
-          font-weight: 400 !important;
-          line-height: 1 !important;
-          text-transform: lowercase !important;
-          letter-spacing: 2px !important;
-          padding: 5px 30px !important;
-          caret-color: transparent !important;
-          -webkit-user-select: none !important;
-          user-select: none !important;
-        }
-
-        #${ROOT_ID} .twitter-no-close:active {
-          box-shadow:
-            inset -1px -1px #fff,
-            inset 1px 1px #292929,
-            inset -2px -2px #ffffff,
-            inset 2px 2px rgb(158, 158, 158) !important;
-        }
-      `;
-      document.documentElement.appendChild(style);
     }
 
     let root = document.getElementById(ROOT_ID);
@@ -166,7 +73,6 @@
   function removeBlankPage() {
     document.documentElement.classList.remove("twitter-no-active");
     document.getElementById(ROOT_ID)?.remove();
-    document.getElementById(STYLE_ID)?.remove();
   }
 
   function applyState(nextEnabled) {
