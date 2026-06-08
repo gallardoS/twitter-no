@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="en">
 
 <head>
   <meta charset="utf-8">
@@ -12,7 +12,7 @@
   <section class="window" aria-label="twitter-no">
     <header class="titlebar">
       <h1>twitter-no</h1>
-      <button id="close-popup" class="window-button" type="button" aria-label="cerrar popup">x</button>
+      <button id="close-popup" class="window-button" type="button" aria-label="close popup">x</button>
     </header>
 
     <div class="window-body">
@@ -21,7 +21,7 @@
         <span id="status" class="status-value">on</span>
       </div>
 
-      <label class="switch" aria-label="activar o desactivar twitter-no">
+      <label class="switch" aria-label="enable or disable twitter-no">
         <span class="switch-label">enabled</span>
         <input id="enabled" type="checkbox">
         <span class="slider"></span>
@@ -43,13 +43,13 @@
     <header class="titlebar">
       <h1 id="chart-title">this-week</h1>
       <div class="titlebar-actions">
-        <button id="toggle-chart-week" class="photo-button" type="button" aria-label="mostrar datos de la semana pasada">last week</button>
-        <button id="copy-chart" class="photo-button" type="button" aria-label="copiar grafica como imagen">photo</button>
+        <button id="toggle-chart-week" class="photo-button" type="button" aria-label="show last week's data">last week</button>
+        <button id="copy-chart" class="photo-button" type="button" aria-label="copy graph as image">photo</button>
       </div>
     </header>
 
     <div class="window-body chart-body">
-      <svg id="week-chart" class="week-chart" viewBox="0 0 320 288" role="img" aria-label="intentos de acceso por dia y hora esta semana"></svg>
+      <svg id="week-chart" class="week-chart" viewBox="0 0 320 288" role="img" aria-label="access attempts by day and hour this week"></svg>
     </div>
   </section>
 

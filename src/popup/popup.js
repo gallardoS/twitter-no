@@ -77,11 +77,11 @@ function renderWeekChart(accessLog = [], weekOffset = currentWeekOffset) {
   toggleChartWeekButton.textContent = weekOffset === 0 ? "last week" : "this week";
   toggleChartWeekButton.setAttribute(
     "aria-label",
-    weekOffset === 0 ? "mostrar datos de la semana pasada" : "mostrar datos de esta semana"
+    weekOffset === 0 ? "show last week's data" : "show this week's data"
   );
   weekChart.setAttribute(
     "aria-label",
-    `intentos de acceso por dia y hora ${weekOffset === 0 ? "esta semana" : "la semana pasada"}`
+    `access attempts by day and hour ${weekOffset === 0 ? "this week" : "last week"}`
   );
   weekChart.replaceChildren();
 
