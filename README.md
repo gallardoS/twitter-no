@@ -11,7 +11,7 @@ chrome extension that blocks twitter/x with a blank page and a centered `no`.
 ## features
 
 - on/off toggle from the extension popup
-- growing timer when twitter-no is disabled so you can still track how much time you have spent using twitter
+- optional timer widget when twitter-no is disabled so you can still track how much time you have spent using twitter
 - optional auto-enable after a configurable number of minutes
 - closes the twitter/x tab with the `ok` button
 - tracks every twitter/x access attempt

@@ -83,33 +83,59 @@ html.twitter-no-active body > :not(#twitter-no-root) {
 }
 
 #twitter-no-timer {
-  --twitter-no-timer-scale: 0;
-  --twitter-no-timer-font-size: calc(13px + (96px - 13px) * var(--twitter-no-timer-scale));
-  --twitter-no-timer-padding-y: calc(5px + (34px - 5px) * var(--twitter-no-timer-scale));
-  --twitter-no-timer-padding-x: calc(10px + (72px - 10px) * var(--twitter-no-timer-scale));
-  --twitter-no-timer-shadow-offset: calc(1px + 7px * var(--twitter-no-timer-scale));
   position: fixed !important;
-  left: 50% !important;
-  bottom: calc(16px + 24px * var(--twitter-no-timer-scale)) !important;
+  left: 0 !important;
+  top: 0 !important;
   z-index: 2147483646 !important;
-  transform: translateX(-50%) !important;
-  min-width: calc(64px + 240px * var(--twitter-no-timer-scale)) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  box-sizing: border-box !important;
+  width: auto !important;
   max-width: calc(100vw - 32px) !important;
-  padding: var(--twitter-no-timer-padding-y) var(--twitter-no-timer-padding-x) !important;
-  border: calc(1px + 3px * var(--twitter-no-timer-scale)) solid rgb(37, 37, 37) !important;
-  background: hsl(0deg 0% 95%) !important;
   color: #000 !important;
-  box-shadow:
-    var(--twitter-no-timer-shadow-offset)
-    var(--twitter-no-timer-shadow-offset)
-    0
-    rgb(37, 37, 37) !important;
   font-family: Helvetica, Arial, sans-serif !important;
-  font-size: var(--twitter-no-timer-font-size) !important;
+  font-size: 13px !important;
+  font-variant-numeric: tabular-nums !important;
   font-weight: 400 !important;
   line-height: 1 !important;
   letter-spacing: 0 !important;
   text-align: center !important;
   white-space: nowrap !important;
-  pointer-events: none !important;
+  pointer-events: auto !important;
+  touch-action: none !important;
+  cursor: grab !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+#twitter-no-timer.twitter-no-timer-dragging {
+  cursor: grabbing !important;
+}
+
+#twitter-no-timer .twitter-no-timer-icon {
+  display: block !important;
+  width: 32px !important;
+  height: 32px !important;
+  flex: 0 0 auto !important;
+  -webkit-user-drag: none !important;
+}
+
+#twitter-no-timer .twitter-no-timer-text {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  width: 96px !important;
+  height: 32px !important;
+  min-width: 64px !important;
+  padding: 0 10px !important;
+  border: 1px solid rgb(37, 37, 37) !important;
+  background: hsl(0deg 0% 95%) !important;
+  box-shadow:
+    1px
+    1px
+    0
+    rgb(37, 37, 37) !important;
 }

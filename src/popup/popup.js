@@ -1,4 +1,6 @@
 const checkbox = document.getElementById("enabled");
+const timerWidgetRow = document.getElementById("timer-widget-row");
+const timerWidgetVisibleCheckbox = document.getElementById("timer-widget-visible");
 const autoEnableRow = document.getElementById("auto-enable-row");
 const autoEnableCheckbox = document.getElementById("auto-enable");
 const autoEnableMinutesInput = document.getElementById("auto-enable-minutes");
@@ -64,6 +66,12 @@ function render(enabled) {
   autoEnableRow.classList.toggle("is-disabled", enabled);
   autoEnableCheckbox.disabled = enabled;
   autoEnableMinutesInput.disabled = enabled;
+  timerWidgetRow.classList.toggle("is-disabled", enabled);
+  timerWidgetVisibleCheckbox.disabled = enabled;
+}
+
+function renderTimerWidgetVisible(timerWidgetVisible) {
+  timerWidgetVisibleCheckbox.checked = timerWidgetVisible;
 }
 
 function getAutoEnableMinutes() {
@@ -373,10 +381,12 @@ chrome.storage.sync.get({
   enabled: true,
   noCount: 0,
   autoEnableEnabled: false,
-  autoEnableMinutes: 3
-}, ({ enabled, noCount, autoEnableEnabled, autoEnableMinutes }) => {
+  autoEnableMinutes: 3,
+  timerWidgetVisible: true
+}, ({ enabled, noCount, autoEnableEnabled, autoEnableMinutes, timerWidgetVisible }) => {
   render(enabled);
   renderAutoEnable(autoEnableEnabled, autoEnableMinutes);
+  renderTimerWidgetVisible(timerWidgetVisible);
   noCountText.textContent = noCount;
 });
 
@@ -392,6 +402,13 @@ checkbox.addEventListener("change", () => {
   const enabled = checkbox.checked;
   chrome.storage.sync.set({ enabled });
   render(enabled);
+});
+
+timerWidgetVisibleCheckbox.addEventListener("change", () => {
+  const timerWidgetVisible = timerWidgetVisibleCheckbox.checked;
+
+  chrome.storage.sync.set({ timerWidgetVisible });
+  renderTimerWidgetVisible(timerWidgetVisible);
 });
 
 autoEnableCheckbox.addEventListener("change", () => {
@@ -416,6 +433,10 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
 
   if (areaName === "sync" && changes.noCount) {
     noCountText.textContent = changes.noCount.newValue;
+  }
+
+  if (areaName === "sync" && changes.timerWidgetVisible) {
+    renderTimerWidgetVisible(changes.timerWidgetVisible.newValue);
   }
 
   if (areaName === "sync" && changes.autoEnableEnabled) {

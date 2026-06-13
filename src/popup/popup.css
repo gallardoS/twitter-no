@@ -227,6 +227,10 @@ h1 {
   gap: 10px;
 }
 
+.timer-widget-row {
+  grid-template-columns: 1fr;
+}
+
 .auto-enable-row.is-disabled {
   color: #808080;
   text-shadow: 1px 1px #fff;

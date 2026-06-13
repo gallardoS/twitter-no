@@ -1,12 +1,17 @@
 (function () {
   const ROOT_ID = "twitter-no-root";
   const TIMER_ID = "twitter-no-timer";
-  const TIMER_MAX_SIZE_MILLISECONDS = 1000 * 60 * 5;
+  const TIMER_ICON_CLASS = "twitter-no-timer-icon";
+  const TIMER_TEXT_CLASS = "twitter-no-timer-text";
+  const TIMER_MOVE_INTERVAL_MILLISECONDS = 5000;
   let enabled = false;
+  let timerWidgetVisible = true;
   let autoEnableEnabled = false;
   let autoEnableMinutes = 3;
   let timerStartedAt = null;
   let timerIntervalId = null;
+  let timerMoveIntervalId = null;
+  let timerDragState = null;
 
   chrome.storage.sync.get({ noCount: 0 }, ({ noCount }) => {
     chrome.storage.sync.set({ noCount: noCount + 1 });
@@ -97,38 +102,153 @@
     return safeMinutes * 60 * 1000;
   }
 
-  function updateTimerText(timer) {
+  function ensureTimerContent(timer) {
+    if (timer.querySelector(`.${TIMER_TEXT_CLASS}`)) {
+      return;
+    }
+
+    const icon = document.createElement("img");
+    icon.className = TIMER_ICON_CLASS;
+    icon.src = chrome.runtime.getURL("icons/icon32.png");
+    icon.alt = "";
+    icon.draggable = false;
+    icon.setAttribute("aria-hidden", "true");
+
+    const text = document.createElement("span");
+    text.className = TIMER_TEXT_CLASS;
+
+    timer.replaceChildren(icon, text);
+  }
+
+  function updateTimer() {
     if (timerStartedAt === null) {
       timerStartedAt = Date.now();
     }
 
     const elapsedMilliseconds = Date.now() - timerStartedAt;
-    const timerScale = Math.min(elapsedMilliseconds / TIMER_MAX_SIZE_MILLISECONDS, 1);
+    const timer = document.getElementById(TIMER_ID);
 
-    timer.textContent = formatElapsedTime(elapsedMilliseconds);
-    timer.style.setProperty("--twitter-no-timer-scale", timerScale.toFixed(3));
+    if (timer) {
+      ensureTimerContent(timer);
+
+      const timerText = timer.querySelector(`.${TIMER_TEXT_CLASS}`);
+
+      if (timerText) {
+        timerText.textContent = formatElapsedTime(elapsedMilliseconds);
+      }
+    }
 
     if (autoEnableEnabled && elapsedMilliseconds >= getAutoEnableLimitMilliseconds()) {
       chrome.storage.sync.set({ enabled: true });
     }
   }
 
-  function startTimer(timer) {
+  function setTimerPosition(timer, left, top) {
+    const timerRect = timer.getBoundingClientRect();
+    const maxLeft = Math.max(window.innerWidth - timerRect.width, 0);
+    const maxTop = Math.max(window.innerHeight - timerRect.height, 0);
+    const safeLeft = Math.min(Math.max(left, 0), maxLeft);
+    const safeTop = Math.min(Math.max(top, 0), maxTop);
+
+    timer.style.setProperty("left", `${Math.round(safeLeft)}px`, "important");
+    timer.style.setProperty("top", `${Math.round(safeTop)}px`, "important");
+  }
+
+  function moveTimerToRandomPosition(timer) {
+    if (timerDragState) {
+      return;
+    }
+
+    const timerRect = timer.getBoundingClientRect();
+    const maxLeft = Math.max(window.innerWidth - timerRect.width, 0);
+    const maxTop = Math.max(window.innerHeight - timerRect.height, 0);
+
+    setTimerPosition(timer, Math.random() * maxLeft, Math.random() * maxTop);
+  }
+
+  function stopTimerDrag(timer, pointerId) {
+    if (!timerDragState || timerDragState.pointerId !== pointerId) {
+      return;
+    }
+
+    timerDragState = null;
+    timer.classList.remove("twitter-no-timer-dragging");
+  }
+
+  function ensureTimerDragging(timer) {
+    if (timer.dataset.twitterNoDragReady === "true") {
+      return;
+    }
+
+    timer.dataset.twitterNoDragReady = "true";
+    timer.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) {
+        return;
+      }
+
+      const timerRect = timer.getBoundingClientRect();
+
+      event.preventDefault();
+      event.stopPropagation();
+      timerDragState = {
+        pointerId: event.pointerId,
+        offsetX: event.clientX - timerRect.left,
+        offsetY: event.clientY - timerRect.top
+      };
+      timer.classList.add("twitter-no-timer-dragging");
+      timer.setPointerCapture(event.pointerId);
+    });
+    timer.addEventListener("pointermove", (event) => {
+      if (!timerDragState || timerDragState.pointerId !== event.pointerId) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+      setTimerPosition(
+        timer,
+        event.clientX - timerDragState.offsetX,
+        event.clientY - timerDragState.offsetY
+      );
+    });
+    timer.addEventListener("pointerup", (event) => {
+      stopTimerDrag(timer, event.pointerId);
+    });
+    timer.addEventListener("pointercancel", (event) => {
+      stopTimerDrag(timer, event.pointerId);
+    });
+    timer.addEventListener("lostpointercapture", (event) => {
+      stopTimerDrag(timer, event.pointerId);
+    });
+  }
+
+  function startTimer() {
     if (timerIntervalId) {
       return;
     }
 
-    updateTimerText(timer);
+    updateTimer();
     timerIntervalId = window.setInterval(() => {
-      const currentTimer = document.getElementById(TIMER_ID);
-
-      if (currentTimer) {
-        updateTimerText(currentTimer);
-      }
+      updateTimer();
     }, 1000);
   }
 
-  function ensureTimer() {
+  function startTimerMovement(timer) {
+    if (timerMoveIntervalId) {
+      return;
+    }
+
+    moveTimerToRandomPosition(timer);
+    timerMoveIntervalId = window.setInterval(() => {
+      const currentTimer = document.getElementById(TIMER_ID);
+
+      if (currentTimer) {
+        moveTimerToRandomPosition(currentTimer);
+      }
+    }, TIMER_MOVE_INTERVAL_MILLISECONDS);
+  }
+
+  function ensureTimerWidget() {
     if (!document.body) {
       return;
     }
@@ -141,17 +261,30 @@
       document.body.appendChild(timer);
     }
 
-    startTimer(timer);
+    ensureTimerContent(timer);
+    ensureTimerDragging(timer);
+    updateTimer();
+    startTimerMovement(timer);
   }
 
-  function removeTimer() {
+  function removeTimerWidget() {
+    if (timerMoveIntervalId) {
+      window.clearInterval(timerMoveIntervalId);
+      timerMoveIntervalId = null;
+    }
+
+    timerDragState = null;
+    document.getElementById(TIMER_ID)?.remove();
+  }
+
+  function stopTimer() {
     if (timerIntervalId) {
       window.clearInterval(timerIntervalId);
       timerIntervalId = null;
     }
 
     timerStartedAt = null;
-    document.getElementById(TIMER_ID)?.remove();
+    removeTimerWidget();
   }
 
   function removeBlankPage() {
@@ -163,7 +296,7 @@
     enabled = Boolean(nextEnabled);
 
     if (enabled) {
-      removeTimer();
+      stopTimer();
 
       if (document.body) {
         ensureBlankPage();
@@ -172,18 +305,28 @@
     }
 
     removeBlankPage();
-    ensureTimer();
+    startTimer();
+
+    if (timerWidgetVisible) {
+      ensureTimerWidget();
+      return;
+    }
+
+    removeTimerWidget();
   }
 
   chrome.storage.sync.get({
     enabled: true,
+    timerWidgetVisible: true,
     autoEnableEnabled: false,
     autoEnableMinutes: 3
   }, ({
     enabled: storedEnabled,
+    timerWidgetVisible: storedTimerWidgetVisible,
     autoEnableEnabled: storedAutoEnableEnabled,
     autoEnableMinutes: storedAutoEnableMinutes
   }) => {
+    timerWidgetVisible = storedTimerWidgetVisible;
     autoEnableEnabled = storedAutoEnableEnabled;
     autoEnableMinutes = storedAutoEnableMinutes;
     applyState(storedEnabled);
@@ -192,6 +335,11 @@
   chrome.storage.onChanged.addListener((changes, areaName) => {
     if (areaName === "sync" && changes.enabled) {
       applyState(changes.enabled.newValue);
+    }
+
+    if (areaName === "sync" && changes.timerWidgetVisible) {
+      timerWidgetVisible = changes.timerWidgetVisible.newValue;
+      applyState(enabled);
     }
 
     if (areaName === "sync" && changes.autoEnableEnabled) {
@@ -208,8 +356,8 @@
       ensureBlankPage();
     }
 
-    if (!enabled && !document.getElementById(TIMER_ID)) {
-      ensureTimer();
+    if (!enabled && timerWidgetVisible && !document.getElementById(TIMER_ID)) {
+      ensureTimerWidget();
     }
   });
 
