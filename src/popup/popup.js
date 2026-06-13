@@ -127,6 +127,10 @@ function getChartPointRadius(count) {
   return 3 + Math.min(count - 1, 5);
 }
 
+function getChartBucketsByLayer(buckets) {
+  return Array.from(buckets.values()).sort((a, b) => a.count - b.count);
+}
+
 function getChartModel(accessLog, weekOffset = 0) {
   const attempts = getWeekAttempts(accessLog, weekOffset);
   const { buckets, maxCount } = getAttemptBuckets(attempts);
@@ -229,7 +233,7 @@ function renderWeekChart(accessLog = [], weekOffset = currentWeekOffset) {
     return;
   }
 
-  chartModel.buckets.forEach(({ day, hour, count }) => {
+  getChartBucketsByLayer(chartModel.buckets).forEach(({ day, hour, count }) => {
     const x = padding.left + (plotWidth / 6) * day;
     const y = padding.top + (plotHeight / hoursInDay) * (hour + 0.5);
 
@@ -335,7 +339,7 @@ function drawCopiedChart(context, accessLog, weekOffset = currentWeekOffset) {
     context.fillText(label, x, chart.y + chart.height - 7);
   });
 
-  chartModel.buckets.forEach(({ day, hour, count }) => {
+  getChartBucketsByLayer(chartModel.buckets).forEach(({ day, hour, count }) => {
     const x = plotX + (plotWidth / 6) * day;
     const y = plotY + (plotHeight / hoursInDay) * (hour + 0.5);
 

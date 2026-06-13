@@ -155,8 +155,7 @@ h1 {
 }
 
 .chart-point {
-  stroke: #fff;
-  stroke-width: 1;
+  stroke: none;
 }
 
 .chart-empty {
